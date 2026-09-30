@@ -130,6 +130,25 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Operator / Parking Management Demo */}
+        <Text style={styles.sectionHeading}>Operator & Management</Text>
+        <TouchableOpacity
+          style={styles.operatorCard}
+          onPress={() => router.push('/operator')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.operatorIconCircle}>
+            <Ionicons name="business" size={20} color={Colors.white} />
+          </View>
+          <View style={styles.operatorTextGroup}>
+            <Text style={styles.operatorTitle}>Parking Management Demo</Text>
+            <Text style={styles.operatorSub}>
+              Slots, occupancy telemetry & revenue simulation
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+        </TouchableOpacity>
+
         {/* App Info & Simulation Notice */}
         <View style={styles.infoCard}>
           <Ionicons name="shield-outline" size={18} color={Colors.textSecondary} />
@@ -304,5 +323,37 @@ const styles = StyleSheet.create({
   },
   logoutBtn: {
     borderColor: Colors.danger,
+  },
+  operatorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  operatorIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  operatorTextGroup: {
+    flex: 1,
+  },
+  operatorTitle: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.textPrimary,
+  },
+  operatorSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNotificationPress,
   onLocationPress,
 }) => {
+  const router = useRouter();
   const { user } = useAuth();
   const { locationName, locationSource } = useLocation();
   const firstName = user?.name ? user.name.split(' ')[0] : 'Driver';
@@ -45,6 +47,15 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.rightSection}>
+        <TouchableOpacity
+          style={[styles.iconButton, { marginRight: 8 }]}
+          onPress={() => router.push('/operator')}
+          activeOpacity={0.7}
+          accessibilityLabel="Parking Management"
+        >
+          <Ionicons name="stats-chart-outline" size={18} color={Colors.primary} />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.iconButton}
           onPress={onNotificationPress}

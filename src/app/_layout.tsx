@@ -60,6 +60,17 @@ export default function RootLayout() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="operator"
+            options={{
+              headerShown: true,
+              title: 'Parking Management',
+              headerTintColor: Colors.primaryDark,
+              headerBackTitle: 'Back',
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: Colors.white },
+            }}
+          />
         </Stack>
         </LocationProvider>
       </AuthProvider>
