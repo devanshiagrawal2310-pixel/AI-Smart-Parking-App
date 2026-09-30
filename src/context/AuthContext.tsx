@@ -14,12 +14,16 @@ export interface CreateBookingParams {
   date?: string;
   startTime?: string;
   endTime?: string;
+  paymentStatus?: 'PAID' | 'PENDING' | 'REFUNDED';
+  paymentMethod?: 'UPI' | 'CARD' | 'WALLET';
+  paymentTransactionId?: string;
 }
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   bookings: Booking[];
+  walletBalance: number;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (
     name: string,
@@ -37,12 +41,19 @@ interface AuthContextType {
     preferredSlotNumber?: string
   ) => Booking;
   cancelBooking: (bookingId: string) => void;
+  markBookingAsPaid: (
+    bookingId: string,
+    paymentMethod: 'UPI' | 'CARD' | 'WALLET',
+    transactionId?: string
+  ) => Booking | undefined;
+  deductWalletBalance: (amount: number) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(DEMO_USER);
+  const [walletBalance, setWalletBalance] = useState<number>(45.0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
 
@@ -127,6 +138,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let startStr = 'Now';
     let endStr = 'In 2 hours';
 
+    let paymentStatus: 'PAID' | 'PENDING' | 'REFUNDED' = 'PENDING';
+    let paymentMethod: 'UPI' | 'CARD' | 'WALLET' | undefined;
+    let paymentTransactionId: string | undefined;
+
     if (typeof spotIdOrParams === 'object') {
       spotId = spotIdOrParams.spotId;
       spotName = spotIdOrParams.spotName;
@@ -139,6 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dateStr = spotIdOrParams.date || 'Today';
       startStr = spotIdOrParams.startTime || 'Now';
       endStr = spotIdOrParams.endTime || `In ${hours} hour${hours > 1 ? 's' : ''}`;
+      paymentStatus = spotIdOrParams.paymentStatus || 'PENDING';
+      paymentMethod = spotIdOrParams.paymentMethod;
+      paymentTransactionId = spotIdOrParams.paymentTransactionId;
     } else {
       spotId = spotIdOrParams;
       spotName = argSpotName || 'Smart Parking Facility';
@@ -147,6 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       hours = argHours || 2;
       preferredSlotNumber = argPreferredSlotNumber;
       endStr = `In ${hours} hour${hours > 1 ? 's' : ''}`;
+      paymentStatus = 'PAID';
+      paymentMethod = 'UPI';
+      paymentTransactionId = `UPI-DEMO-${Date.now().toString().slice(-6)}`;
     }
 
     const assignedSlot =
@@ -171,10 +192,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'ACTIVE',
       qrAccessCode: `SP-QR-${Math.floor(10000 + Math.random() * 90000)}-RESERVED`,
       pinCode: `${Math.floor(1000 + Math.random() * 9000)}`,
+      paymentStatus,
+      paymentMethod,
+      paymentTransactionId,
+      paidAt: paymentStatus === 'PAID' ? 'Just now' : undefined,
     };
 
     setBookings((prev) => [newBooking, ...prev]);
     return newBooking;
+  };
+
+  const markBookingAsPaid = (
+    bookingId: string,
+    method: 'UPI' | 'CARD' | 'WALLET',
+    transactionId?: string
+  ): Booking | undefined => {
+    let updated: Booking | undefined;
+    const txId = transactionId || `${method}-DEMO-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.id === bookingId) {
+          updated = {
+            ...b,
+            status: 'ACTIVE',
+            paymentStatus: 'PAID',
+            paymentMethod: method,
+            paymentTransactionId: txId,
+            paidAt: 'Just now',
+          };
+          return updated;
+        }
+        return b;
+      })
+    );
+    return updated;
+  };
+
+  const deductWalletBalance = (amount: number): boolean => {
+    if (walletBalance >= amount) {
+      setWalletBalance((prev) => parseFloat((prev - amount).toFixed(2)));
+      return true;
+    }
+    return false;
   };
 
   const cancelBooking = (bookingId: string) => {
@@ -189,11 +249,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated,
         bookings,
+        walletBalance,
         login,
         signup,
         logout,
         createBooking,
         cancelBooking,
+        markBookingAsPaid,
+        deductWalletBalance,
       }}
     >
       {children}

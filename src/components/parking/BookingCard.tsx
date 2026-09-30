@@ -48,6 +48,11 @@ export const BookingCard: React.FC<BookingCardProps> = ({
       <View style={styles.topRow}>
         <View style={styles.badgeRow}>
           {getStatusBadge()}
+          {booking.paymentStatus === 'PAID' ? (
+            <Badge label={`Paid • ${booking.paymentMethod || 'Demo'}`} variant="neutral" size="sm" />
+          ) : (
+            <Badge label="Payment Pending" variant="warning" size="sm" />
+          )}
           <Text style={styles.bookingIdText}>#{booking.id}</Text>
         </View>
 
@@ -72,42 +77,48 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <Text style={styles.detailPillText}>{booking.vehiclePlate}</Text>
         </View>
 
-        {booking.date ? (
-          <View style={styles.detailPill}>
-            <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} />
-            <Text style={styles.detailPillText}>{booking.date}</Text>
-          </View>
-        ) : null}
+        <View style={styles.detailPill}>
+          <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} />
+          <Text style={styles.detailPillText}>{booking.date || 'Today'}</Text>
+        </View>
 
         <View style={styles.detailPill}>
           <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
-          <Text style={styles.detailPillText}>{booking.endTime}</Text>
+          <Text style={styles.detailPillText}>{booking.startTime}</Text>
         </View>
       </View>
 
-      {/* Action buttons if Active or Upcoming */}
-      {(isNowActive || isUpcoming) ? (
-        <View style={styles.actionsFooter}>
+      {/* Action buttons footer */}
+      <View style={styles.actionsFooter}>
+        {(isNowActive || isUpcoming) ? (
           <TouchableOpacity
             style={styles.passButton}
             onPress={onViewPass}
             activeOpacity={0.8}
           >
             <Ionicons name="qr-code-outline" size={14} color={Colors.primary} />
-            <Text style={styles.passButtonText}>Digital Gate Pass (PIN: {booking.pinCode})</Text>
+            <Text style={styles.passButtonText}>Pass (PIN: {booking.pinCode})</Text>
           </TouchableOpacity>
+        ) : null}
 
-          {onCancel && !isCancelled ? (
-            <TouchableOpacity
-              style={styles.cancelTextBtn}
-              onPress={onCancel}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      ) : null}
+        <TouchableOpacity
+          style={styles.viewDetailsBtn}
+          onPress={onPress}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.viewDetailsText}>Details ➔</Text>
+        </TouchableOpacity>
+
+        {onCancel && !isCancelled && (isNowActive || isUpcoming) ? (
+          <TouchableOpacity
+            style={styles.cancelTextBtn}
+            onPress={onCancel}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -217,5 +228,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xs,
     color: Colors.danger,
     fontWeight: Typography.weights.medium,
+  },
+  viewDetailsBtn: {
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    backgroundColor: Colors.surfaceSubtle,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  viewDetailsText: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textPrimary,
+    fontWeight: Typography.weights.semibold,
   },
 });

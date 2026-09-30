@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -53,14 +52,15 @@ export default function ReservationSummaryScreen() {
         date: params.date,
         startTime: params.startTime,
         endTime: `After ${durationHours} hour${durationHours > 1 ? 's' : ''}`,
+        paymentStatus: 'PENDING',
       });
 
-      // Navigate to Confirmation Screen
+      // Navigate to Reservation Confirmation Screen
       router.replace({
         pathname: '/booking/confirmation',
         params: { bookingId: newBooking.id },
       });
-    } catch (e) {
+    } catch {
       setIsConfirming(false);
       Alert.alert('Error', 'Unable to complete reservation. Please try again.');
     }

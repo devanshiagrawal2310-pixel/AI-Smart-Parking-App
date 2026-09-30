@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { ParkingSpot, Booking } from '../../types/parking';
 import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
 import { Button } from '../common/Button';
-import { Badge } from '../common/Badge';
 
 interface QuickReserveModalProps {
   visible: boolean;

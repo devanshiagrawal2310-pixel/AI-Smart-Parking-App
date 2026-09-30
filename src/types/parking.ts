@@ -1,10 +1,26 @@
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface DemoLocationPreset {
+  id: string;
+  name: string;
+  description: string;
+  coordinates: Coordinates;
+}
+
+export type LocationSource = 'device' | 'demo';
+
 export interface ParkingSpot {
   id: string;
   name: string;
   category: 'Commercial Garage' | 'Street Spot' | 'Shopping Mall' | 'Tech Park' | 'Airport';
   address: string;
-  distance: string; // e.g. "0.3 miles"
+  distance: string; // e.g. "0.3 mi"
+  distanceNumeric?: number; // numeric miles from active location
   walkingTime: string; // e.g. "3 mins walk"
+  drivingTime?: string; // e.g. "1 min drive"
   totalSpots: number;
   availableSpots: number;
   hourlyRate: number; // in USD
@@ -22,10 +38,7 @@ export interface ParkingSpot {
   availabilityStatus: 'High Availability' | 'Limited Slots' | 'Nearly Full';
   isPopular?: boolean;
   slots?: ParkingSlot[];
-  coordinates: {
-    latitude: number;
-    longitude: number;
-  };
+  coordinates: Coordinates;
 }
 
 export type SlotStatus = 'AVAILABLE' | 'OCCUPIED' | 'RESERVED' | 'DISABLED';
@@ -40,19 +53,36 @@ export interface ParkingSlot {
   priceModifier?: number;
 }
 
+export interface HourlyForecastItem {
+  hour: string;
+  availabilityPct: number;
+  availableSpots: number;
+  status: 'High' | 'Moderate' | 'Low' | 'Critical';
+}
+
+export interface BestTimeToPark {
+  timeWindow: string; // e.g. "1:30 PM - 3:00 PM"
+  occupancyEstimate: string; // e.g. "Low (under 40% full)"
+  advantage: string; // e.g. "Optimal for EV charging and shortest walking distance"
+}
+
 export interface AiPrediction {
   id: string;
+  spotId?: string;
   locationName: string;
-  targetTime: string;
-  confidenceScore: number; // percentage
+  targetTime: string; // e.g. "Next 45 Mins (5:30 PM)"
+  confidenceScore: number; // percentage (e.g. 89)
+  currentAvailableSpots: number;
+  totalSpots: number;
+  currentAvailabilityPct: number;
+  predictedAvailableSpots: number;
   predictedAvailabilityPct: number;
   suggestedAction: string;
   reasoning: string;
   peakHourWarning?: string;
-  hourlyTrend: {
-    hour: string;
-    availabilityPct: number;
-  }[];
+  bestTimeToPark: BestTimeToPark;
+  hourlyTrend: HourlyForecastItem[];
+  isDemoSimulation: true; // prototype demo flag
 }
 
 export interface Booking {
@@ -73,6 +103,10 @@ export interface Booking {
   status: 'ACTIVE' | 'UPCOMING' | 'COMPLETED' | 'CANCELLED';
   qrAccessCode: string;
   pinCode: string;
+  paymentStatus?: 'PAID' | 'PENDING' | 'REFUNDED';
+  paymentMethod?: 'UPI' | 'CARD' | 'WALLET';
+  paymentTransactionId?: string;
+  paidAt?: string;
 }
 
 export interface UserProfile {
@@ -85,3 +119,4 @@ export interface UserProfile {
   isAiAutoReserveEnabled: boolean;
   preferredSpotType: string;
 }
+

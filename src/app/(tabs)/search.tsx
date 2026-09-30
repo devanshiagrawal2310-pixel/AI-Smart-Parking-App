@@ -6,7 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,9 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
 import { ParkingCard } from '../../components/parking/ParkingCard';
 import { QuickReserveModal } from '../../components/parking/QuickReserveModal';
-import { MOCK_PARKING_SPOTS } from '../../data/mockData';
+import { LocationSelectorModal } from '../../components/parking/LocationSelectorModal';
 import { ParkingSpot } from '../../types/parking';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from '../../context/LocationContext';
 import { Badge } from '../../components/common/Badge';
 
 type FilterCategory = 'ALL' | 'HIGH_AVAIL' | 'BUDGET' | 'EV_READY' | 'COVERED' | 'CLOSE';
@@ -25,47 +26,58 @@ type SortOption = 'DISTANCE' | 'PRICE' | 'AVAILABLE';
 export default function ParkingLocationsScreen() {
   const router = useRouter();
   const { createBooking } = useAuth();
+  const {
+    sortedSpots,
+    nearestSpot,
+    locationSource,
+    locationName,
+    isLocating,
+    requestDeviceLocation,
+  } = useLocation();
 
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('DISTANCE');
   const [selectedSpot, setSelectedSpot] = useState<ParkingSpot | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
-  // Search and Filter logic
+  // Search, Filter, and Sort logic using dynamically enriched sortedSpots from LocationContext
   const filteredSpots = useMemo(() => {
-    return MOCK_PARKING_SPOTS.filter((spot) => {
-      const q = query.toLowerCase().trim();
-      const matchesText =
-        !q ||
-        spot.name.toLowerCase().includes(q) ||
-        spot.address.toLowerCase().includes(q) ||
-        spot.category.toLowerCase().includes(q);
+    return sortedSpots
+      .filter((spot) => {
+        const q = query.toLowerCase().trim();
+        const matchesText =
+          !q ||
+          spot.name.toLowerCase().includes(q) ||
+          spot.address.toLowerCase().includes(q) ||
+          spot.category.toLowerCase().includes(q);
 
-      if (!matchesText) return false;
+        if (!matchesText) return false;
 
-      switch (activeFilter) {
-        case 'HIGH_AVAIL':
-          return spot.availabilityStatus === 'High Availability';
-        case 'BUDGET':
-          return spot.hourlyRate <= 4.0;
-        case 'EV_READY':
-          return spot.features.evCharging;
-        case 'COVERED':
-          return spot.features.covered;
-        case 'CLOSE':
-          return parseFloat(spot.distance) <= 0.6;
-        case 'ALL':
-        default:
-          return true;
-      }
-    }).sort((a, b) => {
-      if (sortBy === 'PRICE') return a.hourlyRate - b.hourlyRate;
-      if (sortBy === 'AVAILABLE') return b.availableSpots - a.availableSpots;
-      // Default: distance
-      return parseFloat(a.distance) - parseFloat(b.distance);
-    });
-  }, [query, activeFilter, sortBy]);
+        switch (activeFilter) {
+          case 'HIGH_AVAIL':
+            return spot.availabilityStatus === 'High Availability';
+          case 'BUDGET':
+            return spot.hourlyRate <= 4.0;
+          case 'EV_READY':
+            return spot.features.evCharging;
+          case 'COVERED':
+            return spot.features.covered;
+          case 'CLOSE':
+            return (spot.distanceNumeric ?? 99) <= 0.6;
+          case 'ALL':
+          default:
+            return true;
+        }
+      })
+      .sort((a, b) => {
+        if (sortBy === 'PRICE') return a.hourlyRate - b.hourlyRate;
+        if (sortBy === 'AVAILABLE') return b.availableSpots - a.availableSpots;
+        // Default: distance from active coordinates
+        return (a.distanceNumeric ?? 0) - (b.distanceNumeric ?? 0);
+      });
+  }, [sortedSpots, query, activeFilter, sortBy]);
 
   const totalSpotsCount = useMemo(() => {
     return filteredSpots.reduce((sum, s) => sum + s.availableSpots, 0);
@@ -78,9 +90,49 @@ export default function ParkingLocationsScreen() {
         <View style={styles.headerTitleRow}>
           <View>
             <Text style={styles.title}>Parking Locations</Text>
-            <Text style={styles.subtitle}>Real-time bay availability and facilities</Text>
+            <Text style={styles.subtitle}>Sorted by proximity to your current location</Text>
           </View>
-          <Badge label="7 Hubs Active" variant="info" size="sm" />
+          <Badge label={`${sortedSpots.length} Hubs`} variant="info" size="sm" />
+        </View>
+
+        {/* GPS Reference Bar */}
+        <View style={styles.gpsBar}>
+          <View style={styles.gpsBarLeft}>
+            <Ionicons
+              name={locationSource === 'device' ? 'navigate' : 'map'}
+              size={14}
+              color={locationSource === 'device' ? Colors.successDark : Colors.primary}
+            />
+            <Text style={styles.gpsBarText} numberOfLines={1}>
+              {locationName}
+            </Text>
+            <Badge
+              label={locationSource === 'device' ? 'Live GPS' : 'Demo Hub'}
+              variant={locationSource === 'device' ? 'success' : 'neutral'}
+              size="sm"
+            />
+          </View>
+
+          <View style={styles.gpsBarActions}>
+            <TouchableOpacity
+              style={styles.gpsSmallBtn}
+              onPress={() => requestDeviceLocation()}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <Ionicons name="locate" size={13} color={Colors.primary} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.changeHubBtn}
+              onPress={() => setLocationModalOpen(true)}
+            >
+              <Text style={styles.changeHubText}>Change</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search Input Bar */}
@@ -113,22 +165,7 @@ export default function ParkingLocationsScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.filterPillText, activeFilter === 'ALL' && styles.filterPillTextActive]}>
-              All Facilities ({MOCK_PARKING_SPOTS.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterPill, activeFilter === 'HIGH_AVAIL' && styles.filterPillActive]}
-            onPress={() => setActiveFilter('HIGH_AVAIL')}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="checkmark-circle"
-              size={12}
-              color={activeFilter === 'HIGH_AVAIL' ? Colors.white : Colors.successDark}
-            />
-            <Text style={[styles.filterPillText, activeFilter === 'HIGH_AVAIL' && styles.filterPillTextActive]}>
-              High Availability
+              All ({sortedSpots.length})
             </Text>
           </TouchableOpacity>
 
@@ -144,6 +181,21 @@ export default function ParkingLocationsScreen() {
             />
             <Text style={[styles.filterPillText, activeFilter === 'CLOSE' && styles.filterPillTextActive]}>
               Nearest (&le;0.6 mi)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterPill, activeFilter === 'HIGH_AVAIL' && styles.filterPillActive]}
+            onPress={() => setActiveFilter('HIGH_AVAIL')}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="checkmark-circle"
+              size={12}
+              color={activeFilter === 'HIGH_AVAIL' ? Colors.white : Colors.successDark}
+            />
+            <Text style={[styles.filterPillText, activeFilter === 'HIGH_AVAIL' && styles.filterPillTextActive]}>
+              High Availability
             </Text>
           </TouchableOpacity>
 
@@ -234,6 +286,7 @@ export default function ParkingLocationsScreen() {
           <ParkingCard
             key={spot.id}
             spot={spot}
+            isNearest={spot.id === nearestSpot.id}
             onPress={() => router.push(`/reserve/${spot.id}`)}
             onQuickReserve={() => {
               setSelectedSpot(spot);
@@ -247,7 +300,7 @@ export default function ParkingLocationsScreen() {
             <Ionicons name="business-outline" size={44} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No Matching Parking Locations</Text>
             <Text style={styles.emptySub}>
-              We couldn't find any parking facilities matching "{query}".
+              {`We couldn't find any parking facilities matching "${query}".`}
             </Text>
             <TouchableOpacity
               style={styles.resetBtn}
@@ -265,7 +318,7 @@ export default function ParkingLocationsScreen() {
         <View style={styles.demoNoticeCard}>
           <Ionicons name="information-circle-outline" size={16} color={Colors.textSecondary} />
           <Text style={styles.demoNoticeText}>
-            Local prototype demo feed: Slot counts, distances, and pricing are simulated for Phase 3 evaluation.
+            Local prototype demo feed: Distances, walking times, and slot predictions are dynamically calculated from your active reference point.
           </Text>
         </View>
       </ScrollView>
@@ -285,6 +338,12 @@ export default function ParkingLocationsScreen() {
             hours
           );
         }}
+      />
+
+      {/* Location / GPS Selector Modal */}
+      <LocationSelectorModal
+        visible={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
       />
     </SafeAreaView>
   );
@@ -306,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   title: {
     fontSize: Typography.sizes.xl,
@@ -317,6 +376,58 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xs,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  gpsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceSubtle,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm + 2,
+    borderRadius: BorderRadius.md,
+    marginVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  gpsBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  gpsBarText: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    fontWeight: Typography.weights.medium,
+    maxWidth: 160,
+  },
+  gpsBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  gpsSmallBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  changeHubBtn: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  changeHubText: {
+    fontSize: 10,
+    fontWeight: Typography.weights.bold,
+    color: Colors.primaryDark,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -346,10 +457,10 @@ const styles = StyleSheet.create({
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surfaceSubtle,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: 12,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 6,
     borderRadius: BorderRadius.full,
     gap: 4,
@@ -371,7 +482,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: Colors.borderLight,
   },
@@ -385,76 +496,83 @@ const styles = StyleSheet.create({
   },
   sortOptions: {
     flexDirection: 'row',
-    gap: 4,
+    backgroundColor: Colors.surfaceSubtle,
+    borderRadius: BorderRadius.sm,
+    padding: 2,
+    gap: 2,
   },
   sortBtn: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: BorderRadius.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xs,
   },
   sortBtnActive: {
-    backgroundColor: Colors.primaryMuted,
+    backgroundColor: Colors.white,
+    shadowColor: Colors.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sortBtnText: {
-    fontSize: 11,
-    color: Colors.textMuted,
+    fontSize: Typography.sizes.xs - 1,
+    color: Colors.textSecondary,
     fontWeight: Typography.weights.medium,
   },
   sortBtnTextActive: {
-    color: Colors.primary,
+    color: Colors.primaryDark,
     fontWeight: Typography.weights.bold,
   },
   listContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
     backgroundColor: Colors.background,
   },
   emptyContainer: {
-    alignItems: 'center',
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xxl,
+    alignItems: 'center',
+    marginVertical: Spacing.xl,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginVertical: Spacing.lg,
   },
   emptyTitle: {
-    fontSize: Typography.sizes.md,
+    fontSize: Typography.sizes.lg,
     fontWeight: Typography.weights.bold,
     color: Colors.textPrimary,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
   emptySub: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.sm,
     color: Colors.textSecondary,
-    marginTop: 4,
     textAlign: 'center',
+    marginTop: 4,
+    marginBottom: Spacing.lg,
   },
   resetBtn: {
-    marginTop: Spacing.md,
     backgroundColor: Colors.primaryMuted,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
   },
   resetBtnText: {
     color: Colors.primary,
-    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
+    fontSize: Typography.sizes.sm,
   },
   demoNoticeCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: Colors.surfaceSubtle,
-    borderRadius: BorderRadius.md,
     padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     marginTop: Spacing.md,
-    gap: 8,
+    gap: Spacing.sm,
   },
   demoNoticeText: {
-    fontSize: 11,
-    color: Colors.textMuted,
+    fontSize: Typography.sizes.xs,
+    color: Colors.textSecondary,
     flex: 1,
     lineHeight: 16,
   },

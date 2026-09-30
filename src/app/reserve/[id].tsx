@@ -14,7 +14,10 @@ import { MOCK_PARKING_SPOTS, generateMockSlots } from '../../data/mockData';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { SlotLayoutMap } from '../../components/parking/SlotLayoutMap';
+import { AiPredictionCard } from '../../components/parking/AiPredictionCard';
 import { ParkingSlot } from '../../types/parking';
+import { useLocation } from '../../context/LocationContext';
+import { calculateHaversineDistance, formatDistance, estimateWalkingTime } from '../../services/locationService';
 
 const DATE_OPTIONS = [
   { id: 'today', label: 'Today', sub: 'Oct 1' },
@@ -42,9 +45,15 @@ const DURATION_OPTIONS = [
 export default function ParkingDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userCoordinates, locationSource } = useLocation();
 
   const spot = MOCK_PARKING_SPOTS.find((s) => s.id === id) || MOCK_PARKING_SPOTS[0];
   const facilitySlots = spot.slots || generateMockSlots(spot.id);
+
+  // Dynamic distance based on user reference location
+  const numericDistance = calculateHaversineDistance(userCoordinates, spot.coordinates);
+  const displayDistance = formatDistance(numericDistance);
+  const displayWalkingTime = estimateWalkingTime(numericDistance);
 
   // Slot Selection
   const defaultSlot = facilitySlots.find((s) => s.status === 'AVAILABLE') || null;
@@ -109,6 +118,11 @@ export default function ParkingDetailsScreen() {
             />
             <Badge label={spot.category} variant="neutral" size="sm" />
             {spot.isPopular ? <Badge label="AI Recommended" variant="ai" size="sm" /> : null}
+            <Badge
+              label={locationSource === 'device' ? 'From GPS' : 'From Demo Hub'}
+              variant="neutral"
+              size="sm"
+            />
           </View>
 
           <Text style={styles.spotName}>{spot.name}</Text>
@@ -117,8 +131,8 @@ export default function ParkingDetailsScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statCol}>
               <Text style={styles.statLabel}>Distance</Text>
-              <Text style={styles.statVal}>{spot.distance}</Text>
-              <Text style={styles.statSub}>{spot.walkingTime}</Text>
+              <Text style={styles.statVal}>{displayDistance}</Text>
+              <Text style={styles.statSub}>{displayWalkingTime}</Text>
             </View>
 
             <View style={styles.statDivider} />
@@ -138,6 +152,9 @@ export default function ParkingDetailsScreen() {
             </View>
           </View>
         </View>
+
+        {/* AI Predictive Intelligence & Best Time to Park for this Facility */}
+        <AiPredictionCard facilitySpot={spot} />
 
         {/* Section 1: Visual Parking-Slot Layout */}
         <View style={styles.sectionHeaderRow}>

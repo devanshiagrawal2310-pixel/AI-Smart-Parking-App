@@ -3,13 +3,15 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../context/AuthContext';
+import { LocationProvider } from '../context/LocationContext';
 import { Colors } from '../constants/theme';
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" />
+        <LocationProvider>
+          <StatusBar style="dark" />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -42,12 +44,24 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="booking/payment"
+            options={{
+              headerShown: true,
+              title: 'Digital Payment (Demo)',
+              headerTintColor: Colors.primaryDark,
+              headerBackTitle: 'Back',
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: Colors.white },
+            }}
+          />
+          <Stack.Screen
             name="booking/confirmation"
             options={{
               headerShown: false,
             }}
           />
         </Stack>
+        </LocationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function BookingConfirmationScreen() {
   const router = useRouter();
-  const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
+  const { bookingId, justPaid } = useLocalSearchParams<{ bookingId: string; justPaid?: string }>();
   const { bookings } = useAuth();
 
   const booking = bookings.find((b) => b.id === bookingId) || bookings[0];
@@ -36,6 +36,14 @@ export default function BookingConfirmationScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Payment Confirmation Banner */}
+        {justPaid === 'true' && (
+          <View style={styles.paidSuccessBanner}>
+            <Ionicons name="checkmark-circle" size={18} color={Colors.successDark} />
+            <Text style={styles.paidSuccessText}>Demo Payment Confirmed! Gate pass unlocked.</Text>
+          </View>
+        )}
+
         {/* Success Header */}
         <View style={styles.header}>
           <View style={styles.successIconCircle}>
@@ -130,28 +138,71 @@ export default function BookingConfirmationScreen() {
           </View>
 
           <View style={styles.ticketRow}>
-            <Text style={styles.ticketLabel}>Total Cost (Demo)</Text>
+            <Text style={styles.ticketLabel}>Payment Status</Text>
+            <Badge
+              label={booking.paymentStatus === 'PAID' ? `PAID (${booking.paymentMethod || 'DEMO'})` : 'PENDING PAYMENT'}
+              variant={booking.paymentStatus === 'PAID' ? 'success' : 'warning'}
+              size="sm"
+            />
+          </View>
+
+          {booking.paymentTransactionId ? (
+            <View style={styles.ticketRow}>
+              <Text style={styles.ticketLabel}>Transaction ID</Text>
+              <Text style={styles.ticketValue}>{booking.paymentTransactionId}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.ticketRow}>
+            <Text style={styles.ticketLabel}>Total Amount (Demo)</Text>
             <Text style={styles.ticketTotal}>${booking.totalCost.toFixed(2)}</Text>
           </View>
         </View>
+
+        {booking.paymentStatus !== 'PAID' ? (
+          <View style={styles.payPromptCard}>
+            <Ionicons name="card-outline" size={18} color="#D97706" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.payPromptTitle}>Payment Pending</Text>
+              <Text style={styles.payPromptSub}>Complete digital checkout to lock in your digital gate pass.</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.payPromptBtn}
+              onPress={() => router.push({ pathname: '/booking/payment', params: { bookingId: booking.id } })}
+            >
+              <Text style={styles.payPromptBtnText}>Pay Now</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {/* History Storage Assurance Notice */}
         <View style={styles.noticeCard}>
           <Ionicons name="save-outline" size={16} color={Colors.primary} />
           <Text style={styles.noticeText}>
-            Saved locally! You can view this reservation anytime in <Text style={styles.noticeBold}>My Bookings</Text>.
+            Saved locally in prototype memory! You can access this booking anytime in <Text style={styles.noticeBold}>My Bookings</Text>.
           </Text>
         </View>
 
         {/* Navigation Actions */}
         <View style={styles.actionsContainer}>
+          {booking.paymentStatus !== 'PAID' && (
+            <Button
+              title="Proceed to Demo Payment (Pay Now)"
+              onPress={() => router.push({ pathname: '/booking/payment', params: { bookingId: booking.id } })}
+              variant="primary"
+              size="lg"
+              fullWidth
+              leftIcon={<Ionicons name="card-outline" size={18} color={Colors.white} />}
+            />
+          )}
+
           <Button
             title="View in My Bookings"
             onPress={() => router.replace('/(tabs)/bookings')}
-            variant="primary"
+            variant={booking.paymentStatus === 'PAID' ? 'primary' : 'outline'}
             size="lg"
             fullWidth
-            leftIcon={<Ionicons name="receipt-outline" size={18} color={Colors.white} />}
+            leftIcon={<Ionicons name="receipt-outline" size={18} color={booking.paymentStatus === 'PAID' ? Colors.white : Colors.primary} />}
           />
 
           <Button
@@ -406,5 +457,53 @@ const styles = StyleSheet.create({
   },
   homeBtn: {
     marginTop: 2,
+  },
+  payPromptCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  payPromptTitle: {
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.bold,
+    color: '#92400E',
+  },
+  payPromptSub: {
+    fontSize: 10,
+    color: '#B45309',
+    marginTop: 1,
+  },
+  payPromptBtn: {
+    backgroundColor: '#D97706',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.sm,
+  },
+  payPromptBtnText: {
+    color: Colors.white,
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.bold,
+  },
+  paidSuccessBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    padding: Spacing.sm + 2,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    marginBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  paidSuccessText: {
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.successDark,
   },
 });

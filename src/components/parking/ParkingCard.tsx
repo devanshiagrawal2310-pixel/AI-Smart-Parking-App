@@ -7,12 +7,14 @@ import { Badge } from '../common/Badge';
 
 interface ParkingCardProps {
   spot: ParkingSpot;
+  isNearest?: boolean;
   onPress: () => void;
   onQuickReserve: () => void;
 }
 
 export const ParkingCard: React.FC<ParkingCardProps> = ({
   spot,
+  isNearest,
   onPress,
   onQuickReserve,
 }) => {
@@ -28,6 +30,9 @@ export const ParkingCard: React.FC<ParkingCardProps> = ({
     >
       <View style={styles.topRow}>
         <View style={styles.categoryBadgeRow}>
+          {isNearest ? (
+            <Badge label="Nearest to You" variant="success" size="sm" />
+          ) : null}
           <Badge
             label={spot.availabilityStatus}
             variant={

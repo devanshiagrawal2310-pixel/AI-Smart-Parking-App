@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,29 +19,40 @@ import { ParkingCard } from '../../components/parking/ParkingCard';
 import { AiPredictionCard } from '../../components/parking/AiPredictionCard';
 import { BookingCard } from '../../components/parking/BookingCard';
 import { QuickReserveModal } from '../../components/parking/QuickReserveModal';
-import { MOCK_PARKING_SPOTS, MOCK_AI_PREDICTION } from '../../data/mockData';
+import { LocationSelectorModal } from '../../components/parking/LocationSelectorModal';
+import { MOCK_AI_PREDICTION } from '../../data/mockData';
 import { ParkingSpot } from '../../types/parking';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from '../../context/LocationContext';
 
 type FilterType = 'ALL' | 'CLOSEST' | 'EV' | 'COVERED' | 'BUDGET';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { bookings, createBooking, cancelBooking } = useAuth();
+  const {
+    sortedSpots,
+    nearestSpot,
+    locationSource,
+    locationName,
+    isLocating,
+    requestDeviceLocation,
+  } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
   const [selectedSpotForReserve, setSelectedSpotForReserve] = useState<ParkingSpot | null>(null);
   const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   // Active / Upcoming bookings for recent section
   const relevantBookings = useMemo(() => {
     return bookings.filter((b) => b.status === 'ACTIVE' || b.status === 'UPCOMING');
   }, [bookings]);
 
-  // Filtered parking spots
+  // Filtered parking spots based on active location and proximity sorting
   const filteredSpots = useMemo(() => {
-    return MOCK_PARKING_SPOTS.filter((spot) => {
+    return sortedSpots.filter((spot) => {
       // Query filter
       const matchesQuery =
         spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,15 +65,15 @@ export default function HomeScreen() {
       if (activeFilter === 'EV') return spot.features.evCharging;
       if (activeFilter === 'COVERED') return spot.features.covered;
       if (activeFilter === 'BUDGET') return spot.hourlyRate <= 4.0;
-      if (activeFilter === 'CLOSEST') return parseFloat(spot.distance) <= 0.5;
+      if (activeFilter === 'CLOSEST') return (spot.distanceNumeric ?? 99) <= 0.6;
 
       return true;
     });
-  }, [searchQuery, activeFilter]);
+  }, [searchQuery, activeFilter, sortedSpots]);
 
   const totalAvailableSpots = useMemo(() => {
-    return MOCK_PARKING_SPOTS.reduce((acc, curr) => acc + curr.availableSpots, 0);
-  }, []);
+    return sortedSpots.reduce((acc, curr) => acc + curr.availableSpots, 0);
+  }, [sortedSpots]);
 
   const handleOpenReserve = (spot: ParkingSpot) => {
     setSelectedSpotForReserve(spot);
@@ -105,9 +117,19 @@ export default function HomeScreen() {
     );
   };
 
+  const handleLocateMe = async () => {
+    const success = await requestDeviceLocation();
+    if (!success) {
+      Alert.alert(
+        'GPS Prototype Notice',
+        'Device GPS was not accessible or permission was not granted. Smoothly falling back to Demo Downtown SF coordinates.'
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* App Header */}
+      {/* App Header with Location Selector Trigger */}
       <Header
         onNotificationPress={() =>
           Alert.alert(
@@ -115,9 +137,7 @@ export default function HomeScreen() {
             'AI Alert: Spot availability in Downtown District will decrease by 40% after 5:30 PM due to peak commuter traffic.'
           )
         }
-        onLocationPress={() =>
-          Alert.alert('Simulated Location', 'Current test zone: Downtown Financial District, San Francisco Bay Area.')
-        }
+        onLocationPress={() => setIsLocationModalOpen(true)}
       />
 
       <ScrollView
@@ -153,7 +173,7 @@ export default function HomeScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.filterChipText, activeFilter === 'ALL' && styles.filterChipTextActive]}>
-              All ({MOCK_PARKING_SPOTS.length})
+              All ({sortedSpots.length})
             </Text>
           </TouchableOpacity>
 
@@ -168,7 +188,7 @@ export default function HomeScreen() {
               color={activeFilter === 'CLOSEST' ? Colors.white : Colors.textSecondary}
             />
             <Text style={[styles.filterChipText, activeFilter === 'CLOSEST' && styles.filterChipTextActive]}>
-              Closest (&le;0.5 mi)
+              Closest (&le;0.6 mi)
             </Text>
           </TouchableOpacity>
 
@@ -212,6 +232,67 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* FEATURE: Find Nearby Parking GPS Action Card */}
+        <View style={styles.nearbyGpsCard}>
+          <View style={styles.nearbyGpsTop}>
+            <View style={styles.nearbyGpsLeft}>
+              <View style={styles.nearbyGpsIconBubble}>
+                <Ionicons name="navigate-circle" size={24} color={Colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.nearbyGpsBadgeRow}>
+                  <Text style={styles.nearbyGpsTitle}>Find Nearby Parking</Text>
+                  <Badge
+                    label={locationSource === 'device' ? 'Live GPS' : 'Demo Mode'}
+                    variant={locationSource === 'device' ? 'success' : 'neutral'}
+                    size="sm"
+                  />
+                </View>
+                <Text style={styles.nearbyGpsLocationText} numberOfLines={1}>
+                  📍 {locationName}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick nearest recommendation */}
+          <View style={styles.nearestSpotPreview}>
+            <Ionicons name="sparkles" size={14} color={Colors.primary} />
+            <Text style={styles.nearestSpotPreviewText}>
+              Nearest Spot: <Text style={styles.boldText}>{nearestSpot.name}</Text> •{' '}
+              <Text style={styles.highlightDistance}>{nearestSpot.distance}</Text> ({nearestSpot.walkingTime})
+            </Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.nearbyGpsActions}>
+            <TouchableOpacity
+              style={[styles.locateMeBtn, isLocating && styles.locateMeBtnDisabled]}
+              onPress={handleLocateMe}
+              disabled={isLocating}
+              activeOpacity={0.8}
+            >
+              {isLocating ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Ionicons name="locate" size={15} color={Colors.white} />
+              )}
+              <Text style={styles.locateMeBtnText}>
+                {isLocating ? 'Locating...' : 'Locate with GPS'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.switchHubBtn}
+              onPress={() => setIsLocationModalOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="swap-horizontal" size={15} color={Colors.primaryDark} />
+              <Text style={styles.switchHubBtnText}>Change Hub</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Live Status Metric Bar */}
         <View style={styles.metricsBar}>
@@ -270,12 +351,13 @@ export default function HomeScreen() {
             <Ionicons name="hardware-chip" size={18} color={Colors.accentAI} />
             <Text style={styles.sectionTitle}>AI Parking Prediction</Text>
           </View>
-          <Badge label="Neural Forecast" variant="ai" size="sm" />
+          <Badge label="Prototype Model" variant="ai" size="sm" />
         </View>
 
+        {/* AI Prediction Component with Current vs Predicted & Best Time to Park */}
         <AiPredictionCard prediction={MOCK_AI_PREDICTION} />
 
-        {/* Section: Nearby Parking Facilities */}
+        {/* Section: Nearby Parking Facilities (Sorted by Proximity) */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="business" size={18} color={Colors.primary} />
@@ -285,7 +367,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/(tabs)/search')}
             activeOpacity={0.7}
           >
-            <Text style={styles.seeAllText}>View All ({MOCK_PARKING_SPOTS.length}) ➔</Text>
+            <Text style={styles.seeAllText}>View All ({sortedSpots.length}) ➔</Text>
           </TouchableOpacity>
         </View>
 
@@ -293,6 +375,7 @@ export default function HomeScreen() {
           <ParkingCard
             key={spot.id}
             spot={spot}
+            isNearest={spot.id === nearestSpot.id}
             onPress={() => router.push(`/reserve/${spot.id}`)}
             onQuickReserve={() => handleOpenReserve(spot)}
           />
@@ -330,6 +413,12 @@ export default function HomeScreen() {
         spot={selectedSpotForReserve}
         onClose={() => setIsReserveModalOpen(false)}
         onConfirm={handleConfirmReservation}
+      />
+
+      {/* Location / GPS Selector Modal */}
+      <LocationSelectorModal
+        visible={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
       />
     </SafeAreaView>
   );
@@ -401,6 +490,115 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: Typography.weights.bold,
   },
+  nearbyGpsCard: {
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primaryLight,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  nearbyGpsTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  nearbyGpsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  nearbyGpsIconBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nearbyGpsBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  nearbyGpsTitle: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
+    color: Colors.textPrimary,
+  },
+  nearbyGpsLocationText: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  nearestSpotPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primaryMuted,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginTop: Spacing.sm,
+    gap: 6,
+  },
+  nearestSpotPreviewText: {
+    fontSize: 11,
+    color: Colors.primaryDark,
+    flex: 1,
+  },
+  boldText: {
+    fontWeight: Typography.weights.bold,
+  },
+  highlightDistance: {
+    fontWeight: Typography.weights.bold,
+    color: Colors.successDark,
+  },
+  nearbyGpsActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm + 2,
+  },
+  locateMeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.md,
+    gap: 5,
+  },
+  locateMeBtnDisabled: {
+    opacity: 0.7,
+  },
+  locateMeBtnText: {
+    color: Colors.white,
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.semibold,
+  },
+  switchHubBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: 4,
+  },
+  switchHubBtnText: {
+    color: Colors.textPrimary,
+    fontSize: Typography.sizes.xs,
+    fontWeight: Typography.weights.medium,
+  },
   metricsBar: {
     flexDirection: 'row',
     backgroundColor: Colors.white,
@@ -462,10 +660,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xs,
     color: Colors.primary,
     fontWeight: Typography.weights.semibold,
-  },
-  resultsCountText: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
   },
   emptyBookingsCard: {
     backgroundColor: Colors.white,

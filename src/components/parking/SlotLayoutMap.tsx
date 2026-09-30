@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ParkingSlot } from '../../types/parking';
@@ -101,8 +100,6 @@ export const SlotLayoutMap: React.FC<SlotLayoutMapProps> = ({
       </TouchableOpacity>
     );
   };
-
-  const availableCountOnFloor = floorSlots.filter((s) => s.status === 'AVAILABLE').length;
 
   return (
     <View style={styles.container}>

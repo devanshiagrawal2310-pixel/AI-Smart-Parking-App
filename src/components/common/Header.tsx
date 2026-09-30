@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from '../../context/LocationContext';
 
 interface HeaderProps {
   onNotificationPress?: () => void;
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLocationPress,
 }) => {
   const { user } = useAuth();
+  const { locationName, locationSource } = useLocation();
   const firstName = user?.name ? user.name.split(' ')[0] : 'Driver';
 
   return (
@@ -29,9 +31,13 @@ export const Header: React.FC<HeaderProps> = ({
             onPress={onLocationPress}
             activeOpacity={0.7}
           >
-            <Ionicons name="location-sharp" size={13} color={Colors.primary} />
+            <Ionicons
+              name={locationSource === 'device' ? 'navigate' : 'location-sharp'}
+              size={13}
+              color={locationSource === 'device' ? Colors.successDark : Colors.primary}
+            />
             <Text style={styles.locationText} numberOfLines={1}>
-              Downtown District, Bay Area
+              {locationName}
             </Text>
             <Ionicons name="chevron-down" size={12} color={Colors.textMuted} />
           </TouchableOpacity>
