@@ -1,0 +1,210 @@
+import React, { createContext, useContext, useState } from 'react';
+import { UserProfile, Booking } from '../types/parking';
+import { DEMO_USER, MOCK_BOOKINGS } from '../data/mockData';
+
+export interface CreateBookingParams {
+  spotId: string;
+  spotName: string;
+  address: string;
+  rate: number;
+  hours: number;
+  preferredSlotNumber?: string;
+  floor?: string;
+  slotType?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+}
+
+interface AuthContextType {
+  user: UserProfile | null;
+  isAuthenticated: boolean;
+  bookings: Booking[];
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (
+    name: string,
+    email: string,
+    vehiclePlate: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  createBooking: (
+    spotIdOrParams: string | CreateBookingParams,
+    spotName?: string,
+    address?: string,
+    rate?: number,
+    hours?: number,
+    preferredSlotNumber?: string
+  ) => Booking;
+  cancelBooking: (bookingId: string) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserProfile | null>(DEMO_USER);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Basic validation
+    if (!email || !email.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters long.' };
+    }
+
+    // Demo authentication: accepts any valid format, defaults to DEMO_USER or custom email
+    const loggedUser: UserProfile = {
+      ...DEMO_USER,
+      email: email.trim(),
+      name: email.split('@')[0].replace('.', ' ').toUpperCase(),
+    };
+
+    setUser(loggedUser);
+    setIsAuthenticated(true);
+    return { success: true };
+  };
+
+  const signup = async (
+    name: string,
+    email: string,
+    vehiclePlate: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!name || name.trim().length < 2) {
+      return { success: false, error: 'Please enter your full name.' };
+    }
+    if (!email || !email.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (!vehiclePlate || vehiclePlate.trim().length < 3) {
+      return { success: false, error: 'Please enter a valid vehicle license plate.' };
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters.' };
+    }
+
+    const newUser: UserProfile = {
+      id: `usr_${Date.now()}`,
+      name: name.trim(),
+      email: email.trim(),
+      phone: '+1 (555) 019-2834',
+      vehiclePlate: vehiclePlate.trim().toUpperCase(),
+      vehicleModel: 'Standard Registered Vehicle',
+      isAiAutoReserveEnabled: true,
+      preferredSpotType: 'Standard Covered',
+    };
+
+    setUser(newUser);
+    setIsAuthenticated(true);
+    return { success: true };
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const createBooking = (
+    spotIdOrParams: string | CreateBookingParams,
+    argSpotName?: string,
+    argAddress?: string,
+    argRate?: number,
+    argHours?: number,
+    argPreferredSlotNumber?: string
+  ): Booking => {
+    let spotId = '';
+    let spotName = '';
+    let address = '';
+    let rate = 4.5;
+    let hours = 2;
+    let preferredSlotNumber: string | undefined;
+    let floor: string | undefined;
+    let slotType: string | undefined;
+    let dateStr = 'Today';
+    let startStr = 'Now';
+    let endStr = 'In 2 hours';
+
+    if (typeof spotIdOrParams === 'object') {
+      spotId = spotIdOrParams.spotId;
+      spotName = spotIdOrParams.spotName;
+      address = spotIdOrParams.address;
+      rate = spotIdOrParams.rate;
+      hours = spotIdOrParams.hours;
+      preferredSlotNumber = spotIdOrParams.preferredSlotNumber;
+      floor = spotIdOrParams.floor;
+      slotType = spotIdOrParams.slotType;
+      dateStr = spotIdOrParams.date || 'Today';
+      startStr = spotIdOrParams.startTime || 'Now';
+      endStr = spotIdOrParams.endTime || `In ${hours} hour${hours > 1 ? 's' : ''}`;
+    } else {
+      spotId = spotIdOrParams;
+      spotName = argSpotName || 'Smart Parking Facility';
+      address = argAddress || 'Downtown Parking Bay';
+      rate = argRate || 4.5;
+      hours = argHours || 2;
+      preferredSlotNumber = argPreferredSlotNumber;
+      endStr = `In ${hours} hour${hours > 1 ? 's' : ''}`;
+    }
+
+    const assignedSlot =
+      preferredSlotNumber ||
+      `${String.fromCharCode(65 + Math.floor(Math.random() * 4))}-${Math.floor(Math.random() * 40) + 1}`;
+
+    const newBooking: Booking = {
+      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      spotId,
+      spotName,
+      locationAddress: address,
+      slotNumber: assignedSlot,
+      floor: floor || 'Level 1 (Ground)',
+      slotType: slotType || 'STANDARD',
+      vehiclePlate: user?.vehiclePlate || 'CAL-9021',
+      vehicleModel: user?.vehicleModel || 'Tesla Model 3',
+      date: dateStr,
+      startTime: startStr,
+      endTime: endStr,
+      durationHours: hours,
+      totalCost: parseFloat((rate * hours).toFixed(2)),
+      status: 'ACTIVE',
+      qrAccessCode: `SP-QR-${Math.floor(10000 + Math.random() * 90000)}-RESERVED`,
+      pinCode: `${Math.floor(1000 + Math.random() * 9000)}`,
+    };
+
+    setBookings((prev) => [newBooking, ...prev]);
+    return newBooking;
+  };
+
+  const cancelBooking = (bookingId: string) => {
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: 'CANCELLED' as const } : b))
+    );
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        bookings,
+        login,
+        signup,
+        logout,
+        createBooking,
+        cancelBooking,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
