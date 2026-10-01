@@ -147,7 +147,7 @@ export default function ParkingDetailsScreen() {
 
             <View style={styles.statCol}>
               <Text style={styles.statLabel}>Hourly Rate</Text>
-              <Text style={styles.statVal}>${spot.hourlyRate.toFixed(2)}</Text>
+              <Text style={styles.statVal}>₹{spot.hourlyRate.toFixed(2)}</Text>
               <Text style={styles.statSub}>per hour</Text>
             </View>
           </View>
@@ -268,21 +268,21 @@ export default function ParkingDetailsScreen() {
 
           <View style={styles.feeRow}>
             <Text style={styles.feeRowLabel}>
-              Hourly Rate (${spot.hourlyRate.toFixed(2)} x {selectedDurationHours} hrs)
+              Hourly Rate (₹{spot.hourlyRate.toFixed(2)} x {selectedDurationHours} hrs)
             </Text>
-            <Text style={styles.feeRowValue}>${estimatedFee}</Text>
+            <Text style={styles.feeRowValue}>₹{estimatedFee}</Text>
           </View>
 
           <View style={styles.feeRow}>
             <Text style={styles.feeRowLabel}>Slot Reservation Guarantee</Text>
-            <Text style={styles.feeRowFree}>$0.00 (Demo Free)</Text>
+            <Text style={styles.feeRowFree}>₹0.00 (Demo Free)</Text>
           </View>
 
           <View style={styles.feeDivider} />
 
           <View style={styles.feeTotalRow}>
             <Text style={styles.feeTotalLabel}>Total Estimated Price</Text>
-            <Text style={styles.feeTotalValue}>${estimatedFee}</Text>
+            <Text style={styles.feeTotalValue}>₹{estimatedFee}</Text>
           </View>
         </View>
       </ScrollView>
@@ -293,7 +293,7 @@ export default function ParkingDetailsScreen() {
           <Text style={styles.bottomSlotLabel}>
             Slot: <Text style={styles.bottomSlotBold}>{selectedSlot?.slotNumber || 'Select Bay'}</Text>
           </Text>
-          <Text style={styles.bottomPriceValue}>${estimatedFee} <Text style={styles.bottomHours}>({selectedDurationHours}h)</Text></Text>
+          <Text style={styles.bottomPriceValue}>₹{estimatedFee} <Text style={styles.bottomHours}>({selectedDurationHours}h)</Text></Text>
         </View>
 
         <Button

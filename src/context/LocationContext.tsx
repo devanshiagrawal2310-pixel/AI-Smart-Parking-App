@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { Coordinates, DemoLocationPreset, LocationSource, ParkingSpot } from '../types/parking';
 import {
   DEMO_LOCATION_PRESETS,
@@ -28,11 +28,11 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userCoordinates, setUserCoordinates] = useState<Coordinates>(DEFAULT_DEMO_COORDINATES);
   const [locationSource, setLocationSource] = useState<LocationSource>('demo');
-  const [activePresetId, setActivePresetId] = useState<string | null>('sf-downtown');
-  const [locationName, setLocationName] = useState<string>('Downtown Financial Hub (Demo)');
+  const [activePresetId, setActivePresetId] = useState<string | null>('pune-central');
+  const [locationName, setLocationName] = useState<string>('Pune Central (Demo Fallback)');
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>(
-    'Default demo coordinates active. Tap "Find Nearby" to query device GPS.'
+    'Detecting location or using Pune demo fallback...'
   );
 
   // Dynamically calculate and sort parking spots relative to active user coordinates
@@ -45,13 +45,13 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [sortedSpots]);
 
   /**
-   * Requests device location with permission.
-   * If permission is granted, updates coordinates to live GPS.
-   * If denied or unavailable, falls back gracefully to demo coordinates.
+   * Requests device location with foreground permission.
+   * If permission is granted, updates coordinates to live device GPS and calculates proximity.
+   * If denied or unavailable, falls back to Pune demo coordinates labeled as demo/fallback.
    */
   const requestDeviceLocation = useCallback(async (): Promise<boolean> => {
     setIsLocating(true);
-    setStatusMessage('Querying device GPS sensors...');
+    setStatusMessage('Requesting foreground location permission & GPS coordinates...');
     try {
       const result = await getDeviceOrFallbackLocation();
       setUserCoordinates(result.coordinates);
@@ -60,25 +60,30 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (result.isLiveDevice) {
         setLocationSource('device');
         setActivePresetId(null);
-        setLocationName('Live GPS Location (Active)');
+        setLocationName(result.locationName || 'Live GPS Location (Active)');
         return true;
       } else {
         setLocationSource('demo');
-        setActivePresetId('sf-downtown');
-        setLocationName('Downtown Financial Hub (Demo)');
+        setActivePresetId('pune-central');
+        setLocationName(result.locationName || 'Pune Central (Demo Fallback)');
         return false;
       }
     } catch {
       setUserCoordinates(DEFAULT_DEMO_COORDINATES);
       setLocationSource('demo');
-      setActivePresetId('sf-downtown');
-      setLocationName('Downtown Financial Hub (Demo)');
-      setStatusMessage('Location request timed out. Using Demo Downtown location.');
+      setActivePresetId('pune-central');
+      setLocationName('Pune Central (Demo Fallback)');
+      setStatusMessage('Location request timed out. Using Pune demo coordinates (Demo Fallback).');
       return false;
     } finally {
       setIsLocating(false);
     }
   }, []);
+
+  // Request foreground location on initial mount so actual device coordinates are used
+  useEffect(() => {
+    requestDeviceLocation();
+  }, [requestDeviceLocation]);
 
   /**
    * Sets the active location to one of the demo presets for simulation

@@ -81,7 +81,7 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                 variant={isPaid ? 'success' : 'warning'}
                 size="sm"
               />
-              <Text style={styles.totalHeaderPrice}>${booking.totalCost.toFixed(2)}</Text>
+              <Text style={styles.totalHeaderPrice}>₹{booking.totalCost.toFixed(2)}</Text>
             </View>
 
             {/* Gate Pass Card */}
@@ -206,7 +206,7 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
               <View style={styles.receiptDivider} />
               <View style={styles.metaRow}>
                 <Text style={styles.metaTotalLabel}>Total Amount:</Text>
-                <Text style={styles.metaTotalVal}>${booking.totalCost.toFixed(2)}</Text>
+                <Text style={styles.metaTotalVal}>₹{booking.totalCost.toFixed(2)}</Text>
               </View>
             </View>
 
@@ -214,7 +214,7 @@ export const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             <View style={styles.modalActions}>
               {!isPaid && onPayNow ? (
                 <Button
-                  title={`Complete Demo Payment ($${booking.totalCost.toFixed(2)})`}
+                  title={`Complete Demo Payment (₹${booking.totalCost.toFixed(2)})`}
                   onPress={() => {
                     onClose();
                     onPayNow(booking.id);

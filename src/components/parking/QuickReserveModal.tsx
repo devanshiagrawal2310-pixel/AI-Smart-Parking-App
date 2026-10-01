@@ -104,7 +104,7 @@ export const QuickReserveModal: React.FC<QuickReserveModalProps> = ({
 
                 <View style={styles.ticketRow}>
                   <Text style={styles.ticketLabel}>Total (Demo)</Text>
-                  <Text style={styles.ticketValue}>${totalCost}</Text>
+                  <Text style={styles.ticketValue}>₹{totalCost}</Text>
                 </View>
               </View>
 
@@ -151,7 +151,7 @@ export const QuickReserveModal: React.FC<QuickReserveModalProps> = ({
                 <View style={styles.specDivider} />
                 <View style={styles.specItem}>
                   <Text style={styles.specLabel}>Rate</Text>
-                  <Text style={styles.specValue}>${spot.hourlyRate.toFixed(2)}/hr</Text>
+                  <Text style={styles.specValue}>₹{spot.hourlyRate.toFixed(2)}/hr</Text>
                 </View>
               </View>
 
@@ -184,7 +184,7 @@ export const QuickReserveModal: React.FC<QuickReserveModalProps> = ({
                           isSelected && styles.durationPriceSelected,
                         ]}
                       >
-                        ${(spot.hourlyRate * item.hours).toFixed(2)}
+                        ₹{(spot.hourlyRate * item.hours).toFixed(2)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -196,17 +196,17 @@ export const QuickReserveModal: React.FC<QuickReserveModalProps> = ({
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Base Rate</Text>
                   <Text style={styles.summaryValue}>
-                    ${spot.hourlyRate.toFixed(2)} x {selectedHours} hrs
+                    ₹{spot.hourlyRate.toFixed(2)} x {selectedHours} hrs
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Smart Allocation Fee</Text>
-                  <Text style={styles.summaryValueFree}>$0.00 (Free in Beta)</Text>
+                  <Text style={styles.summaryValueFree}>₹0.00 (Free in Beta)</Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.summaryRowTotal}>
                   <Text style={styles.totalLabel}>Estimated Total</Text>
-                  <Text style={styles.totalValue}>${totalCost}</Text>
+                  <Text style={styles.totalValue}>₹{totalCost}</Text>
                 </View>
               </View>
 
@@ -214,12 +214,12 @@ export const QuickReserveModal: React.FC<QuickReserveModalProps> = ({
               <View style={styles.disclaimerPill}>
                 <Ionicons name="shield-checkmark-outline" size={14} color={Colors.primary} />
                 <Text style={styles.disclaimerText}>
-                  Instant reservation with simulated AI smart lock pass.
+                  Instant reservation with simulated AI smart lock pass (Demo).
                 </Text>
               </View>
 
               <Button
-                title={`Confirm & Reserve ($${totalCost})`}
+                title={`Confirm & Reserve (₹${totalCost}) • Demo`}
                 onPress={handleReserve}
                 variant="primary"
                 size="lg"

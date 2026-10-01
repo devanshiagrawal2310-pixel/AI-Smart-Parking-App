@@ -16,6 +16,7 @@ import { BookingDetailModal } from '../../components/parking/BookingDetailModal'
 import { useAuth } from '../../context/AuthContext';
 import { Booking } from '../../types/parking';
 import { Badge } from '../../components/common/Badge';
+import { MOCK_BOOKINGS } from '../../data/mockData';
 
 type BookingTab = 'ALL' | 'UPCOMING' | 'PAST' | 'CANCELLED';
 
@@ -25,29 +26,41 @@ export default function BookingHistoryScreen() {
   const [activeTab, setActiveTab] = useState<BookingTab>('ALL');
   const [selectedBookingForDetail, setSelectedBookingForDetail] = useState<Booking | null>(null);
 
+  // Unified booking data source: combines active context state and shared local demo storage without duplicates
+  const allBookings = useMemo(() => {
+    const map = new Map<string, Booking>();
+    bookings.forEach((b) => map.set(b.id, b));
+    MOCK_BOOKINGS.forEach((b) => {
+      if (!map.has(b.id)) {
+        map.set(b.id, b);
+      }
+    });
+    return Array.from(map.values());
+  }, [bookings]);
+
   // Filter bookings based on active tab
   const filteredBookings = useMemo(() => {
-    return bookings.filter((b) => {
+    return allBookings.filter((b) => {
       if (activeTab === 'UPCOMING') return b.status === 'ACTIVE' || b.status === 'UPCOMING';
       if (activeTab === 'PAST') return b.status === 'COMPLETED';
       if (activeTab === 'CANCELLED') return b.status === 'CANCELLED';
       return true;
     });
-  }, [bookings, activeTab]);
+  }, [allBookings, activeTab]);
 
   const totalSpent = useMemo(() => {
-    return bookings
+    return allBookings
       .filter((b) => b.paymentStatus === 'PAID')
       .reduce((sum, b) => sum + b.totalCost, 0);
-  }, [bookings]);
+  }, [allBookings]);
 
   const activeCount = useMemo(() => {
-    return bookings.filter((b) => b.status === 'ACTIVE' || b.status === 'UPCOMING').length;
-  }, [bookings]);
+    return allBookings.filter((b) => b.status === 'ACTIVE' || b.status === 'UPCOMING').length;
+  }, [allBookings]);
 
   const pastCount = useMemo(() => {
-    return bookings.filter((b) => b.status === 'COMPLETED').length;
-  }, [bookings]);
+    return allBookings.filter((b) => b.status === 'COMPLETED').length;
+  }, [allBookings]);
 
   const handleCancel = (bookingId: string) => {
     Alert.alert('Cancel Reservation', 'Do you want to release this parking bay?', [
@@ -57,7 +70,7 @@ export default function BookingHistoryScreen() {
   };
 
   const handlePass = (id: string) => {
-    const booking = bookings.find((b) => b.id === id);
+    const booking = allBookings.find((b) => b.id === id);
     if (!booking) return;
     Alert.alert(
       `Gate Access Pass • Bay ${booking.slotNumber}`,
@@ -88,17 +101,17 @@ export default function BookingHistoryScreen() {
         {/* History Quick Metrics */}
         <View style={styles.metricsBar}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricVal}>{bookings.length}</Text>
+            <Text style={styles.metricVal}>{allBookings.length}</Text>
             <Text style={styles.metricLabel}>Total Sessions</Text>
           </View>
           <View style={styles.metricDivider} />
           <View style={styles.metricItem}>
-            <Text style={styles.metricVal}>${totalSpent.toFixed(2)}</Text>
+            <Text style={styles.metricVal}>₹{totalSpent.toFixed(2)}</Text>
             <Text style={styles.metricLabel}>Total Paid (Demo)</Text>
           </View>
           <View style={styles.metricDivider} />
           <View style={styles.metricItem}>
-            <Text style={styles.metricValWallet}>${walletBalance.toFixed(2)}</Text>
+            <Text style={styles.metricValWallet}>₹{walletBalance.toFixed(2)}</Text>
             <Text style={styles.metricLabel}>Wallet Balance</Text>
           </View>
         </View>
@@ -112,7 +125,7 @@ export default function BookingHistoryScreen() {
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === 'ALL' && styles.tabTextActive]}>
-            All ({bookings.length})
+            All ({allBookings.length})
           </Text>
         </TouchableOpacity>
 

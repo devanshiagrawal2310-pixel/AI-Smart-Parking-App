@@ -33,7 +33,7 @@ export default function ReservationSummaryScreen() {
   const [isConfirming, setIsConfirming] = useState(false);
 
   const durationHours = parseInt(params.durationHours || '2', 10);
-  const hourlyRate = parseFloat(params.hourlyRate || '4.50');
+  const hourlyRate = parseFloat(params.hourlyRate || '40.0');
   const totalCost = parseFloat(params.estimatedFee || (durationHours * hourlyRate).toFixed(2));
 
   const handleConfirmReservation = async () => {
@@ -42,8 +42,8 @@ export default function ReservationSummaryScreen() {
     try {
       const newBooking = createBooking({
         spotId: params.spotId || 'spot-1',
-        spotName: params.spotName || 'Metro Center Smart Garage',
-        address: params.address || '450 Innovation Blvd',
+        spotName: params.spotName || 'FC Road Smart Garage',
+        address: params.address || 'Fergusson College Road, Shivajinagar, Pune',
         rate: hourlyRate,
         hours: durationHours,
         preferredSlotNumber: params.slotNumber,
@@ -166,12 +166,12 @@ export default function ReservationSummaryScreen() {
 
           <View style={styles.specRow}>
             <Text style={styles.specLabel}>License Plate</Text>
-            <Text style={styles.specValuePlate}>{user?.vehiclePlate || 'CAL-9021'}</Text>
+            <Text style={styles.specValuePlate}>{user?.vehiclePlate || 'MH-12-PQ-9021'}</Text>
           </View>
 
           <View style={styles.specRow}>
             <Text style={styles.specLabel}>Vehicle Model</Text>
-            <Text style={styles.specValue}>{user?.vehicleModel || 'Tesla Model 3'}</Text>
+            <Text style={styles.specValue}>{user?.vehicleModel || 'Tata Nexon EV'}</Text>
           </View>
         </View>
 
@@ -184,21 +184,21 @@ export default function ReservationSummaryScreen() {
 
           <View style={styles.specRow}>
             <Text style={styles.specLabel}>
-              Base Rate (${hourlyRate.toFixed(2)} x {durationHours} hrs)
+              Base Rate (₹{hourlyRate.toFixed(2)} x {durationHours} hrs)
             </Text>
-            <Text style={styles.specValue}>${totalCost.toFixed(2)}</Text>
+            <Text style={styles.specValue}>₹{totalCost.toFixed(2)}</Text>
           </View>
 
           <View style={styles.specRow}>
             <Text style={styles.specLabel}>Smart Reservation Fee</Text>
-            <Text style={styles.freeBadge}>$0.00 (Free in Beta)</Text>
+            <Text style={styles.freeBadge}>₹0.00 (Free in Beta)</Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total Estimated Price</Text>
-            <Text style={styles.totalValue}>${totalCost.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>₹{totalCost.toFixed(2)}</Text>
           </View>
         </View>
 
@@ -215,11 +215,11 @@ export default function ReservationSummaryScreen() {
       <View style={styles.bottomBar}>
         <View style={styles.bottomFeeCol}>
           <Text style={styles.bottomFeeLabel}>Total Due</Text>
-          <Text style={styles.bottomFeeValue}>${totalCost.toFixed(2)}</Text>
+          <Text style={styles.bottomFeeValue}>₹{totalCost.toFixed(2)}</Text>
         </View>
 
         <Button
-          title="Confirm Reservation"
+          title="Confirm Reservation (Demo)"
           onPress={handleConfirmReservation}
           variant="primary"
           size="lg"

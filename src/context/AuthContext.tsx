@@ -53,7 +53,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(DEMO_USER);
-  const [walletBalance, setWalletBalance] = useState<number>(45.0);
+  const [walletBalance, setWalletBalance] = useState<number>(500.0);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
 
@@ -101,9 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `usr_${Date.now()}`,
       name: name.trim(),
       email: email.trim(),
-      phone: '+1 (555) 019-2834',
+      phone: '+91 98230 45678',
       vehiclePlate: vehiclePlate.trim().toUpperCase(),
-      vehicleModel: 'Standard Registered Vehicle',
+      vehicleModel: 'Tata Nexon EV (Demo)',
       isAiAutoReserveEnabled: true,
       preferredSpotType: 'Standard Covered',
     };
@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let spotId = '';
     let spotName = '';
     let address = '';
-    let rate = 4.5;
+    let rate = 40.0;
     let hours = 2;
     let preferredSlotNumber: string | undefined;
     let floor: string | undefined;
@@ -160,8 +160,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       spotId = spotIdOrParams;
       spotName = argSpotName || 'Smart Parking Facility';
-      address = argAddress || 'Downtown Parking Bay';
-      rate = argRate || 4.5;
+      address = argAddress || 'FC Road Smart Garage, Pune';
+      rate = argRate || 40.0;
       hours = argHours || 2;
       preferredSlotNumber = argPreferredSlotNumber;
       endStr = `In ${hours} hour${hours > 1 ? 's' : ''}`;
@@ -182,8 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       slotNumber: assignedSlot,
       floor: floor || 'Level 1 (Ground)',
       slotType: slotType || 'STANDARD',
-      vehiclePlate: user?.vehiclePlate || 'CAL-9021',
-      vehicleModel: user?.vehicleModel || 'Tesla Model 3',
+      vehiclePlate: user?.vehiclePlate || 'MH-12-PQ-9021',
+      vehicleModel: user?.vehicleModel || 'Tata Nexon EV',
       date: dateStr,
       startTime: startStr,
       endTime: endStr,
@@ -198,7 +198,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       paidAt: paymentStatus === 'PAID' ? 'Just now' : undefined,
     };
 
-    setBookings((prev) => [newBooking, ...prev]);
+    // Ensure the shared local/demo booking storage stays in sync
+    if (!MOCK_BOOKINGS.some((b) => b.id === newBooking.id)) {
+      MOCK_BOOKINGS.unshift(newBooking);
+    }
+
+    setBookings((prev) => {
+      if (prev.some((b) => b.id === newBooking.id)) {
+        return prev;
+      }
+      return [newBooking, ...prev];
+    });
+
     return newBooking;
   };
 
@@ -209,6 +220,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ): Booking | undefined => {
     let updated: Booking | undefined;
     const txId = transactionId || `${method}-DEMO-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const target = MOCK_BOOKINGS.find((b) => b.id === bookingId);
+    if (target) {
+      target.status = 'ACTIVE';
+      target.paymentStatus = 'PAID';
+      target.paymentMethod = method;
+      target.paymentTransactionId = txId;
+      target.paidAt = 'Just now';
+    }
 
     setBookings((prev) =>
       prev.map((b) => {
@@ -238,6 +258,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const cancelBooking = (bookingId: string) => {
+    const target = MOCK_BOOKINGS.find((b) => b.id === bookingId);
+    if (target) {
+      target.status = 'CANCELLED';
+    }
+
     setBookings((prev) =>
       prev.map((b) => (b.id === bookingId ? { ...b, status: 'CANCELLED' as const } : b))
     );

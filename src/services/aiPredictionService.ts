@@ -133,7 +133,7 @@ export function getDistrictAiPrediction(horizon: PredictionTimeHorizon = '1h'): 
 
   return {
     id: `pred-district-${horizon}`,
-    locationName: 'Downtown Metropolitan Hub (All Facilities)',
+    locationName: 'Pune Central & Shivajinagar Hub (All Facilities)',
     targetTime: horizon === '30m' ? 'Next 30 Mins' : horizon === '2h' ? 'Next 2 Hours' : isEve ? 'Evening Peak (5:30 - 7:00 PM)' : 'Next 1 Hour',
     confidenceScore: confidence,
     currentAvailableSpots: 287,
@@ -142,7 +142,7 @@ export function getDistrictAiPrediction(horizon: PredictionTimeHorizon = '1h'): 
     predictedAvailableSpots: Math.round(720 * (predPct / 100)),
     predictedAvailabilityPct: predPct,
     suggestedAction: 'Reserve spot within 20 mins to secure best bay and bypass street parking congestion.',
-    reasoning: 'AI occupancy neural heuristic projects a 38% drop in free spots as downtown offices dismiss staff.',
+    reasoning: 'AI occupancy neural heuristic projects a 38% drop in free spots as commercial IT parks & offices dismiss staff.',
     peakHourWarning: isEve ? 'Severe district-wide congestion between 5:15 PM and 6:45 PM' : undefined,
     bestTimeToPark: {
       timeWindow: '1:30 PM – 3:00 PM',

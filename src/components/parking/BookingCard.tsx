@@ -56,7 +56,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <Text style={styles.bookingIdText}>#{booking.id}</Text>
         </View>
 
-        <Text style={styles.costText}>${booking.totalCost.toFixed(2)}</Text>
+        <Text style={styles.costText}>₹{booking.totalCost.toFixed(2)}</Text>
       </View>
 
       {/* Spot & Slot info */}

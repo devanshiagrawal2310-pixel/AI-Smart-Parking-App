@@ -1,42 +1,12 @@
 import * as Location from 'expo-location';
 import { Coordinates, DemoLocationPreset, ParkingSpot } from '../types/parking';
 
-// Earth radius in miles
-const EARTH_RADIUS_MILES = 3958.8;
-
-// Demo location presets for testing or when device location is not granted
-export const DEMO_LOCATION_PRESETS: DemoLocationPreset[] = [
-  {
-    id: 'sf-downtown',
-    name: 'Downtown Financial Hub',
-    description: '450 Innovation Blvd (Default SF Center)',
-    coordinates: { latitude: 37.7749, longitude: -122.4194 },
-  },
-  {
-    id: 'sf-union-square',
-    name: 'Union Square Retail District',
-    description: 'Market & Powell St Shopping',
-    coordinates: { latitude: 37.7879, longitude: -122.4074 },
-  },
-  {
-    id: 'sf-civic-center',
-    name: 'Civic Center & City Hall',
-    description: '355 McAllister & Van Ness',
-    coordinates: { latitude: 37.7793, longitude: -122.4192 },
-  },
-  {
-    id: 'sf-airport',
-    name: 'SFO International Airport',
-    description: 'Terminal 2 Skyway Connect',
-    coordinates: { latitude: 37.6213, longitude: -122.3790 },
-  },
-];
-
-export const DEFAULT_DEMO_COORDINATES: Coordinates = DEMO_LOCATION_PRESETS[0].coordinates;
+// Earth radius in kilometers
+const EARTH_RADIUS_KM = 6371;
 
 /**
  * Calculates geodesic distance between two coordinate pairs using the Haversine formula
- * @returns distance in miles
+ * @returns distance in kilometers
  */
 export function calculateHaversineDistance(
   coord1: Coordinates,
@@ -53,9 +23,9 @@ export function calculateHaversineDistance(
     Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distanceMiles = EARTH_RADIUS_MILES * c;
+  const distanceKm = EARTH_RADIUS_KM * c;
 
-  return Math.round(distanceMiles * 100) / 100;
+  return Math.round(distanceKm * 100) / 100;
 }
 
 function toRad(degrees: number): number {
@@ -63,21 +33,21 @@ function toRad(degrees: number): number {
 }
 
 /**
- * Formats a distance in miles into user-friendly text
+ * Formats a distance in kilometers into user-friendly text (m or km)
  */
-export function formatDistance(miles: number): string {
-  if (miles < 0.1) {
-    const feet = Math.round(miles * 5280);
-    return `${feet} ft`;
+export function formatDistance(km: number): string {
+  if (km < 1) {
+    const meters = Math.round(km * 1000);
+    return `${meters} m`;
   }
-  return `${miles.toFixed(1)} mi`;
+  return `${km.toFixed(1)} km`;
 }
 
 /**
- * Estimates walking time (assumes 3.0 mph / 20 min per mile)
+ * Estimates walking time (assumes 4.8 km/h / ~12.5 min per km)
  */
-export function estimateWalkingTime(miles: number): string {
-  const minutes = Math.max(1, Math.round(miles * 20));
+export function estimateWalkingTime(km: number): string {
+  const minutes = Math.max(1, Math.round(km * 12.5));
   if (minutes < 60) {
     return `${minutes} min walk`;
   }
@@ -87,25 +57,64 @@ export function estimateWalkingTime(miles: number): string {
 }
 
 /**
- * Estimates driving time (assumes 15.0 mph city traffic / 4 min per mile)
+ * Estimates driving time (assumes 25 km/h city traffic / ~2.4 min per km)
  */
-export function estimateDrivingTime(miles: number): string {
-  const minutes = Math.max(1, Math.round(miles * 4));
+export function estimateDrivingTime(km: number): string {
+  const minutes = Math.max(1, Math.round(km * 2.4));
   return `${minutes} min drive`;
 }
+
+// Pune demo coordinates when device location is not granted or unavailable
+export const PUNE_DEMO_COORDINATES: Coordinates = {
+  latitude: 18.5204,
+  longitude: 73.8567,
+};
+
+// Demo location presets for testing or when device location is not granted
+export const DEMO_LOCATION_PRESETS: DemoLocationPreset[] = [
+  {
+    id: 'pune-central',
+    name: 'Pune Central (Demo Fallback)',
+    description: 'FC Road / Shivajinagar (Pune Demo Fallback)',
+    coordinates: PUNE_DEMO_COORDINATES,
+  },
+  {
+    id: 'pune-hinjewadi',
+    name: 'Hinjewadi Tech Park (Demo)',
+    description: 'Phase 1 Infotech Zone, Pune',
+    coordinates: { latitude: 18.5913, longitude: 73.7389 },
+  },
+  {
+    id: 'pune-viman-nagar',
+    name: 'Viman Nagar Hub (Demo)',
+    description: 'Viman Nagar & Airport Area, Pune',
+    coordinates: { latitude: 18.5679, longitude: 73.9143 },
+  },
+  {
+    id: 'pune-kothrud',
+    name: 'Kothrud Hub (Demo)',
+    description: 'Paud Road Commercial Area, Pune',
+    coordinates: { latitude: 18.5074, longitude: 73.8077 },
+  },
+];
+
+export const DEFAULT_DEMO_COORDINATES: Coordinates = DEMO_LOCATION_PRESETS[0].coordinates;
+
 
 export interface DeviceLocationResult {
   coordinates: Coordinates;
   isLiveDevice: boolean;
   status: 'granted' | 'denied' | 'unavailable' | 'demo';
   message: string;
+  locationName?: string;
 }
 
 /**
  * Requests device GPS location with graceful fallback to demo coordinates
  * - Requests user permission via expo-location
- * - If granted, fetches current position with balanced accuracy and timeout
- * - If denied or error, falls back to demo coordinates without crashing
+ * - If granted, fetches current position with balanced accuracy
+ * - Performs reverse geocoding to resolve a friendly name for the user's location
+ * - If denied or error, falls back to Pune demo coordinates clearly labeled as demo/fallback
  */
 export async function getDeviceOrFallbackLocation(): Promise<DeviceLocationResult> {
   try {
@@ -117,7 +126,8 @@ export async function getDeviceOrFallbackLocation(): Promise<DeviceLocationResul
         coordinates: DEFAULT_DEMO_COORDINATES,
         isLiveDevice: false,
         status: 'denied',
-        message: 'Location permission not granted. Switched to Demo Downtown SF location.',
+        message: 'Foreground location permission not granted. Using Pune demo coordinates (Demo Fallback).',
+        locationName: 'Pune Central (Demo Fallback)',
       };
     }
 
@@ -125,6 +135,25 @@ export async function getDeviceOrFallbackLocation(): Promise<DeviceLocationResul
     const position = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced,
     });
+
+    let locationName = 'Live GPS Location (Active)';
+    try {
+      const reverse = await Location.reverseGeocodeAsync({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+      if (reverse && reverse.length > 0) {
+        const place = reverse[0];
+        const parts = [place.name || place.street, place.city || place.subregion].filter(Boolean);
+        if (parts.length > 0) {
+          locationName = parts.join(', ');
+        } else if (place.city || place.region) {
+          locationName = place.city || place.region || 'Current Location';
+        }
+      }
+    } catch {
+      // Keep default if reverse geocoding is unavailable offline
+    }
 
     return {
       coordinates: {
@@ -134,13 +163,15 @@ export async function getDeviceOrFallbackLocation(): Promise<DeviceLocationResul
       isLiveDevice: true,
       status: 'granted',
       message: 'Live GPS location detected successfully.',
+      locationName,
     };
   } catch {
     return {
       coordinates: DEFAULT_DEMO_COORDINATES,
       isLiveDevice: false,
       status: 'unavailable',
-      message: 'Device GPS unavailable or timed out. Using Demo Downtown SF coordinates.',
+      message: 'Device GPS unavailable or timed out. Using Pune demo coordinates (Demo Fallback).',
+      locationName: 'Pune Central (Demo Fallback)',
     };
   }
 }

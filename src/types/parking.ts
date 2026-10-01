@@ -17,13 +17,13 @@ export interface ParkingSpot {
   name: string;
   category: 'Commercial Garage' | 'Street Spot' | 'Shopping Mall' | 'Tech Park' | 'Airport';
   address: string;
-  distance: string; // e.g. "0.3 mi"
-  distanceNumeric?: number; // numeric miles from active location
+  distance: string; // e.g. "0.3 km"
+  distanceNumeric?: number; // numeric kilometers from active location
   walkingTime: string; // e.g. "3 mins walk"
   drivingTime?: string; // e.g. "1 min drive"
   totalSpots: number;
   availableSpots: number;
-  hourlyRate: number; // in USD
+  hourlyRate: number; // in INR (₹)
   rating: number; // e.g. 4.8
   reviewCount: number;
   features: {

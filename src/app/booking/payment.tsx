@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -42,7 +41,7 @@ export default function DigitalPaymentScreen() {
   const [selectedUpiApp, setSelectedUpiApp] = useState<string>('gpay');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const totalAmount = booking?.totalCost || 9.0;
+  const totalAmount = booking?.totalCost || 80.0;
   const isWalletInsufficient = selectedMethod === 'WALLET' && walletBalance < totalAmount;
 
   const handleProcessPayment = async () => {
@@ -106,8 +105,8 @@ export default function DigitalPaymentScreen() {
             <Ionicons name="business-outline" size={16} color={Colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={styles.infoLabel}>Parking Facility</Text>
-              <Text style={styles.infoValue}>{booking?.spotName || 'Metro Center Smart Garage'}</Text>
-              <Text style={styles.infoSub}>{booking?.locationAddress || '450 Innovation Blvd'}</Text>
+              <Text style={styles.infoValue}>{booking?.spotName || 'FC Road Smart Garage'}</Text>
+              <Text style={styles.infoSub}>{booking?.locationAddress || 'Fergusson College Road, Shivajinagar, Pune'}</Text>
             </View>
           </View>
 
@@ -119,7 +118,7 @@ export default function DigitalPaymentScreen() {
               <Text style={styles.infoValue}>
                 Bay {booking?.slotNumber || 'B-14'} • {booking?.floor || 'Level 1'}
               </Text>
-              <Text style={styles.infoSub}>Vehicle: {booking?.vehiclePlate || 'CAL-9021'}</Text>
+              <Text style={styles.infoSub}>Vehicle: {booking?.vehiclePlate || 'MH-12-PQ-9021'}</Text>
             </View>
           </View>
 
@@ -139,16 +138,16 @@ export default function DigitalPaymentScreen() {
           <View style={styles.pricingBox}>
             <View style={styles.priceRow}>
               <Text style={styles.priceRowLabel}>Parking Slot Charge</Text>
-              <Text style={styles.priceRowVal}>${totalAmount.toFixed(2)}</Text>
+              <Text style={styles.priceRowVal}>₹{totalAmount.toFixed(2)}</Text>
             </View>
             <View style={styles.priceRow}>
               <Text style={styles.priceRowLabel}>Automated Barrier Gate Fee</Text>
-              <Text style={styles.priceRowFree}>$0.00 (Demo Free)</Text>
+              <Text style={styles.priceRowFree}>₹0.00 (Demo Free)</Text>
             </View>
             <View style={styles.priceTotalDivider} />
             <View style={styles.priceTotalRow}>
               <Text style={styles.priceTotalLabel}>Total Due</Text>
-              <Text style={styles.priceTotalValue}>${totalAmount.toFixed(2)}</Text>
+              <Text style={styles.priceTotalValue}>₹{totalAmount.toFixed(2)}</Text>
             </View>
           </View>
         </View>
@@ -260,7 +259,7 @@ export default function DigitalPaymentScreen() {
               <View>
                 <Text style={styles.methodTitle}>SmartPark Wallet (Demo Funds)</Text>
                 <Text style={styles.methodSub}>
-                  Available Balance: <Text style={styles.walletBalBold}>${walletBalance.toFixed(2)}</Text>
+                  Available Balance: <Text style={styles.walletBalBold}>₹{walletBalance.toFixed(2)}</Text>
                 </Text>
               </View>
             </View>
@@ -275,17 +274,17 @@ export default function DigitalPaymentScreen() {
             <View style={styles.walletDetailsBox}>
               <View style={styles.walletCalcRow}>
                 <Text style={styles.walletCalcLabel}>Current Balance:</Text>
-                <Text style={styles.walletCalcVal}>${walletBalance.toFixed(2)}</Text>
+                <Text style={styles.walletCalcVal}>₹{walletBalance.toFixed(2)}</Text>
               </View>
               <View style={styles.walletCalcRow}>
                 <Text style={styles.walletCalcLabel}>Charge Amount:</Text>
-                <Text style={styles.walletCalcDeduct}>-${totalAmount.toFixed(2)}</Text>
+                <Text style={styles.walletCalcDeduct}>-₹{totalAmount.toFixed(2)}</Text>
               </View>
               <View style={styles.walletDivider} />
               <View style={styles.walletCalcRow}>
                 <Text style={styles.walletCalcLabel}>Remaining Balance:</Text>
                 <Text style={styles.walletCalcRemaining}>
-                  ${Math.max(0, walletBalance - totalAmount).toFixed(2)}
+                  ₹{Math.max(0, walletBalance - totalAmount).toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -305,7 +304,7 @@ export default function DigitalPaymentScreen() {
           title={
             isProcessing
               ? 'Processing Demo Payment...'
-              : `Pay Now • $${totalAmount.toFixed(2)} (Demo)`
+              : `Pay Now • ₹${totalAmount.toFixed(2)} (Demo Payment)`
           }
           onPress={handleProcessPayment}
           variant="primary"

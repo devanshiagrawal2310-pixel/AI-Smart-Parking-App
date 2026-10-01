@@ -59,7 +59,7 @@ export default function ParkingLocationsScreen() {
           case 'HIGH_AVAIL':
             return spot.availabilityStatus === 'High Availability';
           case 'BUDGET':
-            return spot.hourlyRate <= 4.0;
+            return spot.hourlyRate <= 40.0;
           case 'EV_READY':
             return spot.features.evCharging;
           case 'COVERED':
@@ -107,7 +107,7 @@ export default function ParkingLocationsScreen() {
               {locationName}
             </Text>
             <Badge
-              label={locationSource === 'device' ? 'Live GPS' : 'Demo Hub'}
+              label={locationSource === 'device' ? 'Live GPS' : 'Demo Fallback'}
               variant={locationSource === 'device' ? 'success' : 'neutral'}
               size="sm"
             />
@@ -235,7 +235,7 @@ export default function ParkingLocationsScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.filterPillText, activeFilter === 'BUDGET' && styles.filterPillTextActive]}>
-              Under $4/hr
+              Under ₹40/hr
             </Text>
           </TouchableOpacity>
         </ScrollView>

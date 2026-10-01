@@ -130,7 +130,7 @@ export const ParkingCard: React.FC<ParkingCardProps> = ({
         <View style={styles.priceContainer}>
           <Text style={styles.pricePrefix}>From</Text>
           <Text style={styles.priceValue}>
-            ${spot.hourlyRate.toFixed(2)}
+            ₹{spot.hourlyRate.toFixed(2)}
             <Text style={styles.priceUnit}>/hr</Text>
           </Text>
         </View>

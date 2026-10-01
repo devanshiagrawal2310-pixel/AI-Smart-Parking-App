@@ -5,9 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, BorderRadius, Spacing, Typography } from '../constants/theme';
 import { Badge } from '../components/common/Badge';
@@ -16,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import { ParkingSlot } from '../types/parking';
 
 export default function ParkingManagementScreen() {
-  const router = useRouter();
   const { bookings } = useAuth();
 
   // Facility selection for operator view
@@ -29,12 +26,7 @@ export default function ParkingManagementScreen() {
   });
 
   const activeSlots = useMemo(() => {
-    if (!facilitySlots[selectedSpotId]) {
-      const generated = currentSpot.slots || generateMockSlots(selectedSpotId);
-      setFacilitySlots((prev) => ({ ...prev, [selectedSpotId]: generated }));
-      return generated;
-    }
-    return facilitySlots[selectedSpotId];
+    return facilitySlots[selectedSpotId] || currentSpot.slots || generateMockSlots(selectedSpotId);
   }, [facilitySlots, selectedSpotId, currentSpot]);
 
   // Metrics computation
@@ -56,7 +48,7 @@ export default function ParkingManagementScreen() {
 
   const todaysRevenue = useMemo(() => {
     const rev = todaysBookings.reduce((sum, b) => sum + (b.totalCost || 0), 0);
-    return rev > 0 ? rev : 42.5;
+    return rev > 0 ? rev : 420.0;
   }, [todaysBookings]);
 
   // Filter for slot list: ALL, AVAILABLE, OCCUPIED
@@ -174,22 +166,22 @@ export default function ParkingManagementScreen() {
             <Text style={[styles.metricNumber, { color: Colors.accentAI }]}>
               {todaysBookingsCount}
             </Text>
-            <Text style={styles.metricLabel}>Today's Bookings</Text>
+            <Text style={styles.metricLabel}>{"Today's Bookings"}</Text>
           </View>
 
           {/* Today's Estimated Revenue (Full Width) */}
           <View style={[styles.metricCard, styles.metricCardRevenue]}>
             <View style={styles.revenueRow}>
               <View>
-                <Text style={styles.revenueLabel}>Today's Estimated Revenue</Text>
-                <Text style={styles.revenueValue}>${todaysRevenue.toFixed(2)}</Text>
+                <Text style={styles.revenueLabel}>{"Today's Estimated Revenue"}</Text>
+                <Text style={styles.revenueValue}>₹{todaysRevenue.toFixed(2)}</Text>
               </View>
               <View style={[styles.metricIconBox, { backgroundColor: '#FEF3C7' }]}>
                 <Ionicons name="cash-outline" size={24} color="#D97706" />
               </View>
             </View>
             <Text style={styles.revenueNote}>
-              Based on active sessions & hourly rate (${currentSpot.hourlyRate.toFixed(2)}/hr)
+              Based on active sessions & hourly rate (₹{currentSpot.hourlyRate.toFixed(2)}/hr)
             </Text>
           </View>
         </View>

@@ -63,10 +63,10 @@ export default function ProfileScreen() {
             <Ionicons name="car-sport" size={24} color={Colors.primary} />
           </View>
           <View style={styles.vehicleDetails}>
-            <Text style={styles.vehicleName}>{user?.vehicleModel || 'Tesla Model 3'}</Text>
+            <Text style={styles.vehicleName}>{user?.vehicleModel || 'Tata Nexon EV (Daytona Grey)'}</Text>
             <View style={styles.plateRow}>
               <Text style={styles.plateLabel}>License Plate:</Text>
-              <Text style={styles.plateValue}>{user?.vehiclePlate || 'CAL-9021'}</Text>
+              <Text style={styles.plateValue}>{user?.vehiclePlate || 'MH-12-PQ-9021'}</Text>
             </View>
           </View>
           <TouchableOpacity

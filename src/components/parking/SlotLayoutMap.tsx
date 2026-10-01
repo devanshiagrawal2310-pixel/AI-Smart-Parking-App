@@ -209,7 +209,7 @@ export const SlotLayoutMap: React.FC<SlotLayoutMapProps> = ({
             <Text style={styles.selectionFloor}>{selectedSlot.floor} • Guaranteed Clean Bay</Text>
           </View>
           <View style={styles.selectionRateCol}>
-            <Text style={styles.selectionRate}>${hourlyRate.toFixed(2)}</Text>
+            <Text style={styles.selectionRate}>₹{hourlyRate.toFixed(2)}</Text>
             <Text style={styles.selectionRateUnit}>/hr</Text>
           </View>
         </View>

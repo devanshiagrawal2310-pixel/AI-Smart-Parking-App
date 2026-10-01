@@ -155,7 +155,7 @@ export default function BookingConfirmationScreen() {
 
           <View style={styles.ticketRow}>
             <Text style={styles.ticketLabel}>Total Amount (Demo)</Text>
-            <Text style={styles.ticketTotal}>${booking.totalCost.toFixed(2)}</Text>
+            <Text style={styles.ticketTotal}>₹{booking.totalCost.toFixed(2)}</Text>
           </View>
         </View>
 

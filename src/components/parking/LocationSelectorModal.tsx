@@ -67,7 +67,7 @@ export const LocationSelectorModal: React.FC<LocationSelectorModalProps> = ({
               />
               <Text style={styles.currentStatusTitle}>Active Reference Point:</Text>
               <Badge
-                label={locationSource === 'device' ? 'Live GPS' : 'Demo Mode'}
+                label={locationSource === 'device' ? 'Live GPS' : 'Demo Fallback'}
                 variant={locationSource === 'device' ? 'success' : 'neutral'}
                 size="sm"
               />

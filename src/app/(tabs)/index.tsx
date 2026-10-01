@@ -64,7 +64,7 @@ export default function HomeScreen() {
       // Filter chips
       if (activeFilter === 'EV') return spot.features.evCharging;
       if (activeFilter === 'COVERED') return spot.features.covered;
-      if (activeFilter === 'BUDGET') return spot.hourlyRate <= 4.0;
+      if (activeFilter === 'BUDGET') return spot.hourlyRate <= 40.0;
       if (activeFilter === 'CLOSEST') return (spot.distanceNumeric ?? 99) <= 0.6;
 
       return true;
@@ -121,8 +121,8 @@ export default function HomeScreen() {
     const success = await requestDeviceLocation();
     if (!success) {
       Alert.alert(
-        'GPS Prototype Notice',
-        'Device GPS was not accessible or permission was not granted. Smoothly falling back to Demo Downtown SF coordinates.'
+        'Location Notice',
+        'Device location was not accessible or permission was not granted. Using Pune demo coordinates (Demo Fallback).'
       );
     }
   };
@@ -228,7 +228,7 @@ export default function HomeScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.filterChipText, activeFilter === 'BUDGET' && styles.filterChipTextActive]}>
-              Under $4/hr
+              Under ₹40/hr
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -306,7 +306,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <View style={styles.metricDivider} />
           <View style={styles.metricItem}>
-            <Text style={styles.metricValue}>$4.45</Text>
+            <Text style={styles.metricValue}>₹49</Text>
             <Text style={styles.metricLabel}>Avg. Hourly Rate</Text>
           </View>
           <View style={styles.metricDivider} />
