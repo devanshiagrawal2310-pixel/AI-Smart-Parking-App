@@ -1,6 +1,6 @@
-# AI Smart Parking App — Mobile Client (Phase 2)
+# AI Smart Parking — Mobile Client (Pune Smart City)
 
-An Expo / React Native mobile application for autonomous smart urban parking, featuring AI-assisted predictive spot availability, contactless bay reservations, digital gate access passes, and real-time occupancy monitoring.
+An Expo / React Native mobile application for autonomous smart urban parking in Pune & Indian metro corridors, featuring AI-assisted predictive spot availability, contactless bay reservations, UPI/digital wallet payments, digital gate access passes, and real-time occupancy monitoring.
 
 ---
 
@@ -13,9 +13,9 @@ An Expo / React Native mobile application for autonomous smart urban parking, fe
 
 ### 2. Parking Locations & Live Availability (Phase 3)
 - **Parking Locations Hub (`/(tabs)/search`)**:
-  - Filter chips: `All`, `High Availability`, `Nearest (≤ 0.6 mi)`, `EV Charging`, `Covered`, and `Under $4/hr`.
+  - Filter chips: `All`, `High Availability`, `Nearest (≤ 0.6 km)`, `EV Charging`, `Covered`, and `Under ₹40/hr`.
   - Sorting toggles: `Distance`, `Price`, and `Available Slots`.
-  - Location cards displaying: **Parking Name**, **Distance & Walk Time**, **Total Slots**, **Available Slots**, **Hourly Rate**, and dedicated **Availability Status** badges (`High Availability`, `Limited Slots`, `Nearly Full`).
+  - Location cards displaying: **Parking Name** (e.g., FC Road Smart Garage, Magarpatta Cyber City), **Distance & Walk Time**, **Total Slots**, **Available Slots**, **Hourly Rate (₹/hr)**, and dedicated **Availability Status** badges (`High Availability`, `Limited Slots`, `Nearly Full`).
 - **Interactive Parking-Slot Layout (`SlotLayoutMap`)**:
   - Floor switcher with live available counts (`Level 1 (Ground)` and `Level 2 (Upper Deck)`).
   - Two-column visual layout with central driveway corridor, directional markers, and entrance guidance.
@@ -35,14 +35,14 @@ An Expo / React Native mobile application for autonomous smart urban parking, fe
     - Arrival Date selector: *Today*, *Tomorrow*, *Upcoming Days*.
     - Arrival Time selector: *Now (Instant)*, *10:30 AM*, *01:00 PM*, *03:30 PM*, *05:30 PM*, etc.
     - Duration chips: *1 Hr*, *2 Hrs*, *3 Hrs*, *4 Hrs*, *All Day (8 Hrs)*.
-    - Live estimated parking fee calculation (`hourlyRate x duration = $total`).
+    - Live estimated parking fee calculation (`hourlyRate x duration = ₹total`).
 - **Reservation Summary Screen (`/booking/summary`)**:
   - Comprehensive review showing:
-    - **Parking Location**: Facility name, address, distance, zone.
+    - **Parking Location**: Facility name, Pune address, distance, and zone (e.g. FC Road / Shivajinagar).
     - **Assigned Bay**: Slot number, deck level, bay type.
     - **Schedule**: Date, arrival time, duration, and complimentary 15-minute grace period.
-    - **Recognized Vehicle**: License plate and vehicle model.
-    - **Estimated Fee Breakdown**: Base parking rate, smart hold fee (`FREE Beta`), and total estimated price.
+    - **Recognized Vehicle**: License plate (e.g. `MH-12-PQ-9021`) and vehicle model (e.g. Tata Nexon EV).
+    - **Estimated Fee Breakdown**: Base parking rate in INR (₹), smart hold fee (`FREE Beta`), and total estimated price.
   - **"Confirm Reservation"** action button.
 - **Booking Confirmation Screen (`/booking/confirmation`)**:
   - Celebratory confirmation screen displaying a unique **Booking ID** (e.g. `#BK-8924`).
@@ -57,12 +57,12 @@ An Expo / React Native mobile application for autonomous smart urban parking, fe
 - **Session State**: React Context-driven session handling via `AuthContext`, persisting the current driver profile across screens.
 
 ### 3. Home / Dashboard Screen (`/(tabs)/`)
-- **App Header & Location**: Dynamic user greeting, current parking zone selector, and smart notification center.
+- **App Header & Location**: Dynamic user greeting, current Pune parking zone selector (Shivajinagar, Viman Nagar, Magarpatta, Hadapsar), and smart notification center.
 - **Search & Filter Bar**: Instant text filter with quick chips for:
-  - `Closest (≤ 0.5 mi)`
+  - `Closest (≤ 0.6 km)`
   - `EV Charging`
   - `Covered / Indoor`
-  - `Under $4/hr`
+  - `Under ₹40/hr`
 - **Metrics Overview**: Real-time counter of available spaces across facilities, average hourly rate, and AI match percentage.
 - **Active & Upcoming Bookings**: Live reservation cards displaying assigned slot (e.g. `B-14`), license plate, gate PIN, and direct digital QR pass inspection.
 - **AI Parking Prediction Section**:

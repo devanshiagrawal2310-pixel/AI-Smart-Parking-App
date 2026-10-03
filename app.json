@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AI-Smart-Parking-App",
-    "slug": "AI-Smart-Parking-App",
+    "name": "AI Smart Parking",
+    "slug": "devu",
     "scheme": "ai-smart-parking",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.devuagrawal.aismartparking"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -25,6 +26,13 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fbdaee1c-79f2-4ecd-ac99-c170d78bb08c"
+      }
+    },
+    "owner": "devuagrawals-team"
   }
 }
